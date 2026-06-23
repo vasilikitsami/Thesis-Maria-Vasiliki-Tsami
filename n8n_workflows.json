@@ -1,0 +1,2903 @@
+{
+  "name": "Vasiliki Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "return [\n  { json: { url: \"https://praktiki.duth.gr/\" } },\n  { json: { url: \"https://praktiki.duth.gr/about/\" } },\n  { json: { url: \"https://praktiki.duth.gr/contact/\" } },\n  { json: { url: \"https://praktiki.duth.gr/guides/\" } },\n  { json: { url: \"https://praktiki.duth.gr/faq/\" } }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        0
+      ],
+      "id": "727c4221-79c0-434f-b728-fa9e780a19e3",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        400,
+        0
+      ],
+      "id": "9aaf9da1-de7b-4a9e-9ec0-3fa758e6237a",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        640,
+        96
+      ],
+      "id": "df1fd93c-1dd7-47df-90d3-0a8bb76581e5",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "page_text",
+              "cssSelector": "body"
+            },
+            {
+              "key": "title",
+              "cssSelector": "title"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        832,
+        96
+      ],
+      "id": "62c5b5bd-7272-40e3-af56-5b2271643430",
+      "name": "HTML"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d814c73c-e3b2-448c-b771-3e1526052a58",
+              "name": "markdownContent",
+              "value": "={{ $json.page_text }}",
+              "type": "string"
+            },
+            {
+              "id": "c2a005cd-bed0-4a4c-bd80-fec7b83c38bb",
+              "name": "pageTitle",
+              "value": "={{ $json.title || 'Untitled Page' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1024,
+        96
+      ],
+      "id": "962e92b1-14e4-47a4-9add-3e44bf7e332a",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\" />\n  <title>{{ $json.title || 'Scraped Page' }}</title>\n  <style>\n    body {\n      font-family: Arial, Helvetica, sans-serif;\n      line-height: 1.6;\n    }\n    h1, h2, h3 {\n      margin-top: 24px;\n    }\n    p {\n      margin: 12px 0;\n    }\n  </style>\n</head>\n<body>\n\n<h1>{{ $json.title || 'Untitled Page' }}</h1>\n\n<p><em>Source:</em> <a href=\"{{ $json.url }}\">Original page</a></p>\n<hr />\n\n{{ $json.markdownContent }}\n\n</body>\n</html>\n"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1232,
+        96
+      ],
+      "id": "cdbe45a7-eb1c-4d0e-a7bb-0ca50876d0e5",
+      "name": "HTML1"
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "={{ $('Edit Fields1').item.json.content }}",
+        "name": "={{ $('Edit Fields1').item.json.pageTitle.replace(/[\\\\/:*?\"<>|]/g, '-') }}\n",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1UKimkraCZksbO95oEv7HRt8v3_MMNkKf",
+          "mode": "list",
+          "cachedResultName": "Sources",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1UKimkraCZksbO95oEv7HRt8v3_MMNkKf"
+        },
+        "options": {
+          "convertToGoogleDocument": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2096,
+        96
+      ],
+      "id": "99d8d9f4-07ad-44f9-8a7a-f3e504e790ab",
+      "name": "Create file from text",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1FPnT84p8Li0yWEq",
+          "name": "Google Drive account 7"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1648,
+        96
+      ],
+      "id": "ad7ecf09-aabd-49ef-95cc-fca8dc73c53b",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\n\nitem.json = item.json || {};\nitem.json.mimeType = 'text/html';\n\nreturn item;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        96
+      ],
+      "id": "a5af265e-226a-4db4-b699-fa3a3dee8608",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cd1d9750-a09f-4eac-83d5-0d04d2a3c965",
+              "name": "content",
+              "value": "=<!DOCTYPE html> <html> <head>   <meta charset=\"UTF-8\" /> </head> <body>  {{ $json.html }}  </body> </html>",
+              "type": "string"
+            },
+            {
+              "id": "bb7a89b7-024a-4ec1-9165-95ddb4d50fcd",
+              "name": "pageTitle",
+              "value": "={{ $('Edit Fields').item.json.title }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1440,
+        96
+      ],
+      "id": "ec6dc1cc-e6bc-43fb-aeff-b21231e76f0d",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -160,
+        448
+      ],
+      "id": "11bcd259-e276-4aa6-8d6e-660ffed7534e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { json: { url: \"https://praktiki.duth.gr/\" } },\n  { json: { url: \"https://praktiki.duth.gr/about/\" } },\n  { json: { url: \"https://praktiki.duth.gr/contact/\" } },\n  { json: { url: \"https://praktiki.duth.gr/guides/\" } },\n  { json: { url: \"https://praktiki.duth.gr/faq/\" } }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        448
+      ],
+      "id": "0523dac2-ca42-43e2-813f-0f8a66a6002b",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        288,
+        448
+      ],
+      "id": "08c55f69-659b-4145-b965-cf263bed8c72",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\n\nitem.json = item.json || {};\n\nitem.json.fileName = item.json.pageTitle;\n\nitem.json.mimeType = 'text/html';\n\nreturn item;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        544
+      ],
+      "id": "c7e4789e-5e26-4d48-9c29-e22a01376760",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        512,
+        544
+      ],
+      "id": "1cf5c981-e43d-466d-9970-811ed1dd50f3",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "page_text",
+              "cssSelector": "body"
+            },
+            {
+              "key": "title",
+              "cssSelector": "title"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        704,
+        544
+      ],
+      "id": "db121843-d830-4fa0-851f-1e4220cbfbe8",
+      "name": "HTML2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d814c73c-e3b2-448c-b771-3e1526052a58",
+              "name": "markdownContent",
+              "value": "={{ $json.page_text }}",
+              "type": "string"
+            },
+            {
+              "id": "c2a005cd-bed0-4a4c-bd80-fec7b83c38bb",
+              "name": "pageTitle",
+              "value": "={{ $json.title || 'Untitled Page' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        544
+      ],
+      "id": "9c2746c1-51f1-417f-b9da-733cd3f469ec",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\" />\n  <title>{{ $json.title || 'Scraped Page' }}</title>\n  <style>\n    body {\n      font-family: Arial, Helvetica, sans-serif;\n      line-height: 1.6;\n    }\n    h1, h2, h3 {\n      margin-top: 24px;\n    }\n    p {\n      margin: 12px 0;\n    }\n  </style>\n</head>\n<body>\n\n<h1>{{ $json.title || 'Untitled Page' }}</h1>\n\n<p><em>Source:</em> <a href=\"{{ $json.url }}\">Original page</a></p>\n<hr />\n\n{{ $json.markdownContent }}\n\n</body>\n</html>\n"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1328,
+        544
+      ],
+      "id": "cb9f8f27-78d0-479a-8df5-c7c1af9f18d6",
+      "name": "HTML3"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1712,
+        544
+      ],
+      "id": "57345fc4-56e2-4c26-89ac-ad5e48637395",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cd1d9750-a09f-4eac-83d5-0d04d2a3c965",
+              "name": "content",
+              "value": "=<!DOCTYPE html> <html> <head>   <meta charset=\"UTF-8\" /> </head> <body>  {{ $json.html }}  </body> </html>",
+              "type": "string"
+            },
+            {
+              "id": "bb7a89b7-024a-4ec1-9165-95ddb4d50fcd",
+              "name": "pageTitle",
+              "value": "={{ $('Edit Fields2').item.json.title }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1520,
+        544
+      ],
+      "id": "e6abd126-bd06-4c66-a9b7-1f7abb357841",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "184f161c-13f7-4c53-b1dd-20161d880496",
+              "name": "pageTitle",
+              "value": "={{ $('Edit Fields3').item.json.pageTitle }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1904,
+        544
+      ],
+      "id": "f2503995-ad34-44a9-95cf-081b97525ec0",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b010206f-9156-4630-a3e8-07c3e3f8842d",
+              "leftValue": "={{ $items(\"Search files and folders\").length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2480,
+        544
+      ],
+      "id": "37fb371f-bb77-4c5f-bc19-7a8b8279a5dc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "createFromText",
+        "content": "={{ $('Edit Fields1').item.json.content }}",
+        "name": "={{ $('Edit Fields1').item.json.pageTitle.replace(/[\\\\/:*?\"<>|]/g, '-') }}\n",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1UKimkraCZksbO95oEv7HRt8v3_MMNkKf",
+          "mode": "list",
+          "cachedResultName": "Sources",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1UKimkraCZksbO95oEv7HRt8v3_MMNkKf"
+        },
+        "options": {
+          "convertToGoogleDocument": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2880,
+        640
+      ],
+      "id": "a1185926-897f-4f50-a6d6-ba1b8bd2407f",
+      "name": "Create file from text1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1FPnT84p8Li0yWEq",
+          "name": "Google Drive account 7"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        3072,
+        528
+      ],
+      "id": "f3b01288-8e73-4235-a868-672dc3a327e6",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "amount": 0.5
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3248,
+        528
+      ],
+      "id": "2abb73cc-fd66-4f81-95b3-776ad4bdd54c",
+      "name": "Wait",
+      "webhookId": "5db61e75-8ade-4cd1-8fcd-c87e3eaf57ed"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "changeFileContent": true,
+        "inputDataFieldName": "=data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2880,
+        448
+      ],
+      "id": "70ff29c6-b43a-4129-9b32-f4552716240c",
+      "name": "Update file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1FPnT84p8Li0yWEq",
+          "name": "Google Drive account 7"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Create File",
+        "height": 496,
+        "width": 2512
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -176,
+        -128
+      ],
+      "typeVersion": 1,
+      "id": "b3309985-5d47-4adc-94bf-0f25e8ad8483",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:latest",
+        "options": {
+          "format": "default"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        128,
+        1184
+      ],
+      "id": "094dab8a-028c-4efe-a11b-4c3841ab4f59",
+      "name": "Ollama Chat Model2",
+      "notesInFlow": false,
+      "credentials": {
+        "ollamaApi": {
+          "id": "8hGKwjYnj5VcBGKA",
+          "name": "Ollama account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "bge-m3:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        288,
+        1344
+      ],
+      "id": "54ddb3be-92a4-46a9-915f-99a3c58a2424",
+      "name": "Embeddings Ollama3",
+      "credentials": {
+        "ollamaApi": {
+          "id": "8hGKwjYnj5VcBGKA",
+          "name": "Ollama account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Find info relevant to the chat input.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 15,
+        "useReranker": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        288,
+        1200
+      ],
+      "id": "e035876a-7277-4bf8-9621-451d03d7ef40",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yKJWydYihpZ1049x",
+          "name": "Supabase account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "rerank-multilingual-v3.0",
+        "topN": 4
+      },
+      "type": "@n8n/n8n-nodes-langchain.rerankerCohere",
+      "typeVersion": 1,
+      "position": [
+        432,
+        1360
+      ],
+      "id": "54ff8004-f9db-44fa-b4ae-8f8cc09cb0f0",
+      "name": "Reranker Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "xF4T3w5PanNT7HJb",
+          "name": "CohereApi account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.Question }}",
+        "options": {
+          "systemMessage": "Είσαι βοηθός σε ιστοσελίδα για το πρόγραμμα πρακτικής άσκησης του Δημοκριτείου Πανεπιστημίου Θράκης (ΔΠΘ).\n\nΔιαθέτεις ένα μόνο έγκυρο εργαλείο γνώσης: το Tool \"Supabase Vector Store\".\n\nΥΠΟΧΡΕΩΤΙΚΗ ΔΙΑΔΙΚΑΣΙΑ:\n1. ΠΡΙΝ απαντήσεις σε οποιαδήποτε ερώτηση, ΠΡΕΠΕΙ να καλέσεις το Tool \"Supabase Vector Store\" με την ερώτηση του χρήστη.\n2. ΠΡΕΠΕΙ να βασίσεις την απάντησή σου ΑΠΟΚΛΕΙΣΤΙΚΑ στα αποτελέσματα που επέστρεψε το tool.\n3. ΑΠΑΓΟΡΕΥΕΤΑΙ να απαντήσεις από γενική γνώση, μνήμη, υπόθεση ή προηγούμενη γνώση.\n4. Αν δεν βρεθούν σχετικά αποτελέσματα ή δεν είσαι βέβαιος, απάντησε ακριβώς με το fallback που δίνεται παρακάτω.\n5. Αν απαντήσεις χωρίς να χρησιμοποιήσεις το tool, η απάντηση θεωρείται άκυρη.\n\nΗ απάντηση πρέπει να είναι στα Ελληνικά.\nΗ απάντηση πρέπει πάντα να τελειώνει με ενότητα:\nΠηγές:\nκαι ακριβώς από κάτω το όνομα ή τα ονόματα των εγγράφων που χρησιμοποιήθηκαν από το tool.\n\nΥΠΟΧΡΕΩΤΙΚΗ ΜΟΡΦΗ ΕΞΟΔΟΥ:\n- Θα εμφανίζεις ΑΚΡΙΒΩΣ ΜΙΑ ΦΟΡΑ το tag <ΑΠΑΝΤΗΣΗ> και θα είναι η πρώτη γραμμή της τελικής απάντησης.\n- ΜΗΝ γράψεις το string <ΑΠΑΝΤΗΣΗ> πουθενά αλλού.\n- Μετά το tag <ΑΠΑΝΤΗΣΗ> γράφεις μόνο το τελικό κείμενο της απάντησης.\n- ΜΗΝ γράφεις τίποτα μετά το τελικό κείμενο της απάντησης.\n\nΜορφή:\n<ΑΠΑΝΤΗΣΗ>\n(τελικό κείμενο απάντησης)\n\nΑν δεν βρίσκεις την απάντηση στη βάση δεδομένων ή δεν είσαι βέβαιος για αυτήν, τότε απάντησε ΑΚΡΙΒΩΣ ως εξής:\n\n<ΑΠΑΝΤΗΣΗ>\nΠαρακαλώ επικοινωνήστε με το Κεντρικό Γραφείο Πρακτικής Άσκησης μέσω e-mail στο praktiki@duth.gr",
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        976
+      ],
+      "id": "be28bb08-dcaf-41d6-a073-70a61cc30ac8",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Answer από τον agent\nlet raw = String($json.output ?? \"\");\n\n// κρατάμε μόνο το κομμάτι μετά το <ΑΠΑΝΤΗΣΗ>\nlet text = raw.split(\"<ΑΠΑΝΤΗΣΗ>\").pop().trim();\n\nconst contexts = [];\n\nconst steps = $json.intermediateSteps ?? [];\n\nfor (const step of steps) {\n\n  let obs = step.observation;\n  if (!obs) continue;\n\n  try {\n\n    // observation είναι string JSON array\n    const arr = JSON.parse(obs);\n\n    for (const item of arr) {\n\n      if (!item.text) continue;\n\n      // δεύτερο JSON.parse\n      const inner = JSON.parse(item.text);\n\n      if (inner.pageContent) {\n\n        contexts.push(\n          String(inner.pageContent).slice(0,1200)\n        );\n\n      }\n\n    }\n\n  } catch(e) {}\n\n}\n\nreturn [{\n  json:{\n    text,\n    contexts\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        976
+      ],
+      "id": "07e383c9-2641-48c2-bd23-df92995c7bf8",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $(\"Loop Over Items2\").item.json ?? {};\nconst question = row.Question ?? row.question ?? \"\";\n\nlet text = String($json.text ?? \"\").trim();\n\nlet contexts = Array.isArray($json.contexts)\n  ? $json.contexts.map(String)\n  : [];\n\nconst question_key = question\n  .toLowerCase()\n  .replace(/[!\"#$%&'()*+,\\-./:;<=>?@[\\\\\\]^_`{|}~«»\"'΄’]/g, \"\")\n  .replace(/\\s+/g, \" \")\n  .trim();\n\nreturn {\n  json: {\n    question,\n    question_key,\n    text,\n    answer: text,\n    contexts\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        976
+      ],
+      "id": "01316a82-1494-4a1e-836a-b22ee6df0141",
+      "name": "Code in JavaScript5"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-oss:latest",
+          "mode": "list",
+          "cachedResultName": "gpt-oss:latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Είσαι evaluator που υπολογίζει τη μετρική RAGAS FAITHFULNESS.\n\nΕπέστρεψε ΜΟΝΟ valid JSON, χωρίς markdown, χωρίς backticks, χωρίς έξτρα κείμενο.\n\nΤο JSON πρέπει να είναι ΑΚΡΙΒΩΣ:\n{\n  \"score\": 0.000,\n  \"reason\": \"...\",\n  \"details\": {\n    \"tp\": 0,\n    \"fp\": 0,\n    \"fn\": 0,\n    \"notes\": \"...\"\n  }\n}\n\nMetric: FAITHFULNESS\n\nΟρισμός:\nΗ Faithfulness μετρά πόσο συνεπής είναι η answer με τα retrieved contexts.\nΜια answer είναι faithful μόνο αν κάθε claim της υποστηρίζεται από τα contexts.\n\nΥπολογισμός:\n1. Διέσπασε την answer σε atomic claims.\n2. Για κάθε claim, έλεγξε αν υποστηρίζεται ή μπορεί να συναχθεί από τα contexts.\n3. tp = αριθμός claims της answer που υποστηρίζονται από τα contexts.\n4. fp = αριθμός claims της answer που ΔΕΝ υποστηρίζονται από τα contexts.\n5. fn = 0 για αυτή τη μετρική.\n6. total_claims = tp + fp\n7. Αν total_claims = 0, score = 1.000 μόνο αν η answer δεν περιέχει κανέναν πραγματικό factual claim. Αλλιώς score = 0.000.\n8. Σε κάθε άλλη περίπτωση:\n   score = tp / (tp + fp)\n\nΑυστηροί κανόνες:\n- Χρησιμοποίησε ΜΟΝΟ την answer και τα retrieved contexts.\n- ΜΗΝ χρησιμοποιήσεις το question για να δικαιολογήσεις claim που δεν υπάρχει στα contexts.\n- ΜΗΝ χρησιμοποιήσεις ground truth.\n- ΜΗΝ τιμωρείς την answer για πληροφορίες που λείπουν αλλά δεν δηλώνονται.\n- Ένα claim μετρά ως supported μόνο αν υποστηρίζεται ρητά ή αν συνάγεται καθαρά από τα contexts.\n-Αν η απάντηση είναι \"Παρακαλώ επικοινωνήστε με το Κεντρικό Γραφείο Πρακτικής Άσκησης\nμέσω e-mail στο praktiki@duth.gr\", τότε βάλε αυτόματα Faithfulness=1\n- Αν ένα claim προσθέτει πληροφορία που δεν υπάρχει στα contexts, μέτρα το ως fp.\n- Αγνόησε πλήρως οποιοδήποτε context == \"NO_CONTEXT\".\n\nΜορφή εξόδου:\n- score ∈ [0.000, 1.000] με ΑΚΡΙΒΩΣ 3 δεκαδικά.\n- Το reason να είναι στα Ελληνικά, σύντομο και συγκεκριμένο.\n- Τα tp/fp/fn να είναι ακέραιοι.\n- Το notes να είναι σύντομο.\n\nΔεδομένα:\nanswer: {{$json.answer}}\n\ncontexts:\n{{$json.contexts\n  .filter(c => c && c !== \"NO_CONTEXT\")\n  .map((c, i) => `<<<BEGIN CHUNK ${i+1}>>>\\n${c}\\n<<<END CHUNK ${i+1}>>>`)\n  .join('\\n\\n')}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [
+        1904,
+        848
+      ],
+      "id": "0e941e6f-233e-485d-bfd6-bde9f37e3c77",
+      "name": "Faithfulness",
+      "credentials": {
+        "ollamaApi": {
+          "id": "8hGKwjYnj5VcBGKA",
+          "name": "Ollama account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-oss:latest",
+          "mode": "list",
+          "cachedResultName": "gpt-oss:latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Είσαι evaluator που υπολογίζει τη μετρική RAGAS ANSWER_RELEVANCE.\n\nΕπέστρεψε ΜΟΝΟ valid JSON, χωρίς markdown, χωρίς backticks, χωρίς έξτρα κείμενο.\n\nΤο JSON πρέπει να είναι ΑΚΡΙΒΩΣ:\n{\n  \"score\": 0.000,\n  \"reason\": \"...\",\n  \"details\": {\n    \"tp\": 0,\n    \"fp\": 0,\n    \"fn\": 0,\n    \"notes\": \"...\"\n  }\n}\n\nMetric: ANSWER_RELEVANCE\n\nΟρισμός:\nΗ Answer Relevance μετρά πόσο σχετική είναι η answer με το original question.\nΗ μετρική είναι reference-free και ΔΕΝ αξιολογεί αν η answer είναι factual ή supported από contexts.\n\nΥπολογισμός (σύμφωνα με RAGAS):\n\n1. Από την answer δημιούργησε 3 πιθανές ερωτήσεις που θα μπορούσαν να έχουν οδηγήσει σε αυτή την answer.\n2. Σύγκρινε καθεμία από αυτές τις generated questions με το original question ως προς το νόημα.\n3. Υπολόγισε semantic similarity για κάθε ζεύγος.\n4. Το τελικό score είναι ο μέσος όρος αυτών των similarities.\n\nscore = (sim1 + sim2 + sim3) / 3\n\nΚανόνες αξιολόγησης:\n\n- Χρησιμοποίησε ΜΟΝΟ question και answer.\n- ΜΗΝ χρησιμοποιήσεις ground_truth.\n- ΜΗΝ χρησιμοποιήσεις contexts.\n- ΜΗΝ αξιολογήσεις factual correctness.\n- Αν η answer είναι ελλιπής ή περιέχει άσχετες πληροφορίες, οι generated questions θα αποκλίνουν από το original question και το score θα μειωθεί.\n- Αν η answer επιτρέπει σαφή ανακατασκευή του original question, το score θα είναι υψηλό.\n\nJSON fields:\n\nscore\n- αριθμός στο [0.000, 1.000]\n- ΑΚΡΙΒΩΣ 3 δεκαδικά\n\nreason\n- σύντομη εξήγηση στα Ελληνικά\n\ndetails\n\ntp\n- πόσες από τις 3 generated questions είναι ισχυρά ευθυγραμμισμένες με το original question\n\nfp\n- πόσες από τις 3 generated questions αποκλίνουν σημαντικά\n\nfn\n- 0 για αυτή τη μετρική\n\nnotes\n- σύντομη περιγραφή της ποιότητας της answer (complete / partial / noisy)\n\nΔεδομένα:\n\nquestion: {{$json.question}}\nanswer: {{$json.answer}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [
+        1904,
+        1008
+      ],
+      "id": "7f21c579-ac21-4d04-8003-b70fd9ab88cc",
+      "name": "Answer Relevance",
+      "credentials": {
+        "ollamaApi": {
+          "id": "8hGKwjYnj5VcBGKA",
+          "name": "Ollama account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-oss:latest",
+          "mode": "list",
+          "cachedResultName": "gpt-oss:latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Είσαι evaluator που υπολογίζει τη μετρική RAGAS CONTEXT_PRECISION.\n\nΕπέστρεψε ΜΟΝΟ valid JSON, χωρίς markdown, χωρίς backticks, χωρίς έξτρα κείμενο.\n\nΤο JSON πρέπει να είναι ΑΚΡΙΒΩΣ:\n{\n  \"score\": 0.000,\n  \"reason\": \"...\",\n  \"details\": {\n    \"tp\": 0,\n    \"fp\": 0,\n    \"fn\": 0,\n    \"notes\": \"...\"\n  }\n}\n\nMetric: CONTEXT_PRECISION\n\nΟρισμός:\nΗ Context Precision μετρά αν τα relevant retrieved contexts εμφανίζονται ψηλά στη σειρά ανάκτησης.\n\nΗ μετρική αξιολογεί την ποιότητα της ανάκτησης (retrieval), όχι την ποιότητα της answer.\n\nΥπολογισμός:\n\n1. Εξέτασε κάθε retrieved context chunk ξεχωριστά, με τη σειρά που δίνεται.\n2. Αξιολόγησε αν το chunk είναι relevant για την ερώτηση και το ground_truth.\n\nΈνα chunk θεωρείται relevant αν:\n- περιέχει πληροφορία που βοηθά άμεσα να απαντηθεί η ερώτηση\nή\n- περιέχει πληροφορία που υπάρχει στο ground_truth.\n\nΜετρήσεις:\n\n- tp = αριθμός relevant retrieved chunks\n- fp = αριθμός irrelevant retrieved chunks\n- fn = 0\n\n- Για κάθε θέση k στη σειρά των valid contexts:\n  - precision@k = (αριθμός relevant chunks μέχρι τη θέση k) / k\n  - v_k = 1 αν το chunk στη θέση k είναι relevant, αλλιώς 0\n\nΤελικό score:\n\nscore = (άθροισμα όλων των precision@k * v_k) / (συνολικό πλήθος relevant chunks)\n\nΑν δεν υπάρχει κανένα relevant chunk, τότε score = 0.000.\n\nΣημαντικό:\n- ΜΗΝ υπολογίζεις score απλά ως tp / (tp + fp).\n- Η μετρική πρέπει να ανταμείβει περιπτώσεις όπου τα relevant contexts βρίσκονται νωρίς στη λίστα.\n- Αν relevant chunks υπάρχουν αλλά εμφανίζονται χαμηλά, το score πρέπει να είναι χαμηλότερο.\n- Αν μόνο ένα context είναι relevant αλλά βρίσκεται πρώτο, το score μπορεί να είναι υψηλό.\n- Αν μόνο ένα context είναι relevant αλλά βρίσκεται τελευταίο, το score πρέπει να είναι χαμηλότερο.\n\nΚανόνες αξιολόγησης:\n\n- Χρησιμοποίησε ΜΟΝΟ question, contexts και ground_truth.\n- ΜΗΝ χρησιμοποιήσεις την answer.\n- ΜΗΝ υποθέτεις ότι όλα τα contexts είναι relevant.\n- Ένα chunk είναι irrelevant αν είναι άσχετο με την ερώτηση ή δεν περιέχει χρήσιμη πληροφορία.\n\nΚανόνας για contexts:\n\n- Αγνόησε πλήρως οποιοδήποτε context == \"NO_CONTEXT\".\n- Αξιολόγησε μόνο contexts που περιέχουν πραγματικό κείμενο.\n- Ο αριθμός των contexts που αξιολογούνται είναι N = πλήθος έγκυρων contexts.\n\nΜορφή εξόδου:\n\nscore\n- αριθμός στο [0.000, 1.000]\n- ΑΚΡΙΒΩΣ 3 δεκαδικά\n\nreason\n- σύντομη εξήγηση στα Ελληνικά\n- να αναφέρει πόσα contexts είναι relevant και αν εμφανίζονται νωρίς ή αργά στη λίστα\n\ndetails\n\ntp\n- πλήθος relevant contexts\n\nfp\n- πλήθος irrelevant contexts\n\nfn\n- 0\n\nnotes\n- σύντομη περιγραφή της ποιότητας της κατάταξης των retrieved contexts\n\nΔεδομένα:\n\nquestion: {{$json.question}}\n\ncontexts:\n{{$json.contexts\n  .filter(c => c && c !== \"NO_CONTEXT\")\n  .map((c, i) => `<<<BEGIN CHUNK ${i+1}>>>\\n${c}\\n<<<END CHUNK ${i+1}>>>`)\n  .join('\\n\\n')}}\n\nground_truth: {{$json.ground_truth}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [
+        1904,
+        1184
+      ],
+      "id": "0b6743f9-77cb-43f2-966f-0a75b554bdcf",
+      "name": "Context Precision",
+      "credentials": {
+        "ollamaApi": {
+          "id": "8hGKwjYnj5VcBGKA",
+          "name": "Ollama account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-oss:latest",
+          "mode": "list",
+          "cachedResultName": "gpt-oss:latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Είσαι evaluator που υπολογίζει τη μετρική RAGAS CONTEXT_RECALL.\n\nΕπέστρεψε ΜΟΝΟ valid JSON, χωρίς markdown, χωρίς backticks, χωρίς έξτρα κείμενο.\n\nΤο JSON πρέπει να είναι ΑΚΡΙΒΩΣ:\n{\n  \"score\": 0.000,\n  \"reason\": \"...\",\n  \"details\": {\n    \"tp\": 0,\n    \"fp\": 0,\n    \"fn\": 0,\n    \"notes\": \"...\"\n  }\n}\n\nMetric: CONTEXT_RECALL\n\nΟρισμός:\nΗ Context Recall μετρά πόσο από τη βασική πληροφορία (ground truth)\nπεριέχεται μέσα στα retrieved contexts.\n\nΗ μετρική αξιολογεί την πληρότητα της ανάκτησης (retrieval completeness).\n\nΥπολογισμός:\n\n1. Διέσπασε το ground_truth σε atomic facts ή sentences.\n2. Για κάθε fact, έλεγξε αν εμφανίζεται ή υποστηρίζεται από τα retrieved contexts.\n3. tp = αριθμός ground truth facts που καλύπτονται από τα contexts.\n4. fn = αριθμός ground truth facts που ΔΕΝ εμφανίζονται στα contexts.\n5. fp = 0 για αυτή τη μετρική.\n\ntotal_facts = tp + fn\n\nscore = tp / (tp + fn)\n\nΑν total_facts = 0 τότε score = 0.000.\n\nΚανόνες αξιολόγησης:\n\n- Χρησιμοποίησε ΜΟΝΟ contexts και ground_truth.\n- ΜΗΝ χρησιμοποιήσεις την answer.\n- ΜΗΝ χρησιμοποιήσεις την question για να αυξήσεις το score.\n- Ένα fact μετρά ως covered αν:\n  • εμφανίζεται ρητά στα contexts\n  ή\n  • μπορεί να συναχθεί καθαρά από τα contexts.\n\nΚανόνας για contexts:\n\n- Αγνόησε πλήρως οποιοδήποτε context == \"NO_CONTEXT\".\n- Αξιολόγησε μόνο contexts που περιέχουν πραγματικό κείμενο.\n- Ο αριθμός των contexts που αξιολογούνται είναι N = πλήθος έγκυρων contexts.\n\nΜορφή εξόδου:\n\nscore\n- αριθμός στο [0.000, 1.000]\n- ΑΚΡΙΒΩΣ 3 δεκαδικά\n\nreason\n- σύντομη εξήγηση στα Ελληνικά\n- αναφορά στο πλήθος των facts που καλύπτονται\n\ndetails\n\ntp\n- αριθμός ground truth facts που εμφανίζονται στα contexts\n\nfp\n- 0\n\nfn\n- αριθμός ground truth facts που λείπουν από τα contexts\n\nnotes\n- σύντομη περιγραφή της πληρότητας των retrieved contexts\n\nΔεδομένα:\n\ncontexts:\n{{$json.contexts\n  .filter(c => c && c !== \"NO_CONTEXT\")\n  .map((c, i) => `<<<BEGIN CHUNK ${i+1}>>>\\n${c}\\n<<<END CHUNK ${i+1}>>>`)\n  .join('\\n\\n')}}\n\nground_truth: {{$json.ground_truth}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [
+        1904,
+        1360
+      ],
+      "id": "8a5720a6-6b55-401a-a86e-d4a7f403c829",
+      "name": "Context Recall",
+      "credentials": {
+        "ollamaApi": {
+          "id": "8hGKwjYnj5VcBGKA",
+          "name": "Ollama account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-oss:latest",
+          "mode": "list",
+          "cachedResultName": "gpt-oss:latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Είσαι evaluator που υπολογίζει τη μετρική RAGAS ANSWER_CORRECTNESS.\n\nΕπέστρεψε ΜΟΝΟ valid JSON, χωρίς markdown, χωρίς backticks, χωρίς έξτρα κείμενο.\n\nΤο JSON πρέπει να είναι ΑΚΡΙΒΩΣ:\n{\n  \"score\": 0.000,\n  \"reason\": \"...\",\n  \"details\": {\n    \"tp\": 0,\n    \"fp\": 0,\n    \"fn\": 0,\n    \"notes\": \"...\"\n  }\n}\n\nMetric: ANSWER_CORRECTNESS\n\nΗ μετρική συγκρίνει την answer με το ground_truth και συνδυάζει:\n\n1) factual similarity (F1 πάνω σε facts)\n2) semantic similarity μεταξύ answer και ground_truth\n\nΧρησιμοποίησε ΜΟΝΟ τους παρακάτω τύπους.\n\n--------------------------------\n\nΒήμα 1 — factual similarity\n\n1. Διέσπασε το ground_truth σε atomic facts.\n2. Διέσπασε την answer σε atomic facts.\n\nΥπολόγισε:\n\ntp = αριθμός facts που υπάρχουν και στο answer και στο ground_truth  \nfp = αριθμός facts που υπάρχουν στο answer αλλά όχι στο ground_truth  \nfn = αριθμός facts που υπάρχουν στο ground_truth αλλά όχι στο answer  \n\nΥπολόγισε factual similarity ΜΟΝΟ με τον τύπο:\n\nF1 = |TP| / (|TP| + 0.5 × (|FP| + |FN|))\n\n--------------------------------\n\nΒήμα 2 — semantic similarity\n\nΥπολόγισε semantic similarity μεταξύ answer και ground_truth.\n\nΧρησιμοποίησε ΜΟΝΟ τον τύπο cosine similarity μεταξύ embeddings:\n\nSemanticSimilarity = (A · B) / (|A| · |B|)\n\nόπου:\n\nA = embedding της answer  \nB = embedding του ground_truth  \n\n--------------------------------\n\nΒήμα 3 — τελικό score\n\nΤο Answer Correctness είναι weighted average των:\n\n- factual similarity (F1)\n- semantic similarity\n\nΑν δεν δοθούν άλλα weights χρησιμοποίησε:\n\nscore = 0.5 × F1 + 0.5 × SemanticSimilarity\n\n--------------------------------\n\nΚανόνες:\n\n- Χρησιμοποίησε ΜΟΝΟ answer και ground_truth.\n- ΜΗΝ χρησιμοποιήσεις contexts.\n- ΜΗΝ χρησιμοποιήσεις question.\n- ΜΗΝ προσθέσεις άλλους τύπους ή heuristics.\n\n--------------------------------\n\nΜορφή εξόδου:\n\nscore\n- αριθμός στο [0.000, 1.000]\n- ΑΚΡΙΒΩΣ 3 δεκαδικά\n\nreason\n- σύντομη εξήγηση στα Ελληνικά\n\ndetails\n\ntp\n- πλήθος σωστών facts\n\nfp\n- πλήθος λανθασμένων facts\n\nfn\n- πλήθος facts που λείπουν\n\nnotes\n- σύντομη περιγραφή της αντιστοιχίας answer και ground_truth\n\n--------------------------------\n\nΔεδομένα:\n\nanswer: {{$json.answer}}\n\nground_truth: {{$json.ground_truth}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [
+        1904,
+        1552
+      ],
+      "id": "d256de02-e173-4c46-be6c-4bb36fd67cd8",
+      "name": "Answer Correctness",
+      "credentials": {
+        "ollamaApi": {
+          "id": "8hGKwjYnj5VcBGKA",
+          "name": "Ollama account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1ivGTNx4SJLM5yT2CnKuIHo93BBI69_CpOQJvxtvHQFI/edit?gid=1537653750#gid=1537653750",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "GD",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "question_key",
+              "lookupValue": "={{ $json.question_key }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1136,
+        976
+      ],
+      "id": "d879204c-21ea-47cd-8f46-119f2620b15a",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "m5hmyUmmAdZry1Uj",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "question_key",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1680,
+        992
+      ],
+      "id": "7bff9498-d8dd-484d-98a4-1045ddaaf0fd",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize the Google Sheet row so it can merge with JS5 output\nconst q = String($json[\"Question\"] ?? \"\")\n  .toLowerCase()\n  .replace(/[!\"#$%&'()*+,\\-./:;<=>?@[\\\\\\]^_`{|}~«»\"'΄’]/g, \"\")\n  .replace(/\\s+/g, \" \")\n  .trim();\nconst gt = String($json[\"Ground Truth\"] ?? \"\").trim();\nreturn [{\n  json: {\n    ...$json,\n    question_key: q,\n    ground_truth: gt\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        976
+      ],
+      "id": "c4edb3c2-87a1-4367-81d3-a10163bef3fa",
+      "name": "Code in JavaScript6"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0823e6fd-d261-4bd6-9ee1-a458a744bacc",
+              "name": "timestamp",
+              "value": "={{ $now }}",
+              "type": "string"
+            },
+            {
+              "id": "f9951ce7-ff47-4d75-8f0d-9fbc67403072",
+              "name": "question",
+              "value": "={{$(\"Loop Over Items2\").item.json[\"Question\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "336448f1-adfd-49d8-9c70-d4872cb93202",
+              "name": "ground_truth",
+              "value": "={{$node[\"Get row(s) in sheet\"].json[\"Ground Truth\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "bffe10e6-15da-456c-8fa4-93321d7fb445",
+              "name": "model",
+              "value": "qwen3.5:4b",
+              "type": "string"
+            },
+            {
+              "id": "c01fda8b-2a77-4436-80b0-d83c7b38d84e",
+              "name": "faithfulness_score",
+              "value": "={{ JSON.parse($json.content).score }}",
+              "type": "number"
+            },
+            {
+              "id": "ee2b2da7-6326-4f34-935f-e6b8af1372cf",
+              "name": "faithfulness_reason",
+              "value": "={{ JSON.parse($json.content).reason }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2208,
+        848
+      ],
+      "id": "c3bf2284-f23d-4587-9379-7f79ea2876f4",
+      "name": "Edit Fields5"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b14e0602-e106-40b8-bf2c-931ee822ce0f",
+              "name": "relevance_score",
+              "value": "={{ JSON.parse($json.content).score }}",
+              "type": "number"
+            },
+            {
+              "id": "2a97ba68-399a-488e-8806-44be90305bc2",
+              "name": "relevance_reason",
+              "value": "={{ JSON.parse($json.content).reason }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2208,
+        1008
+      ],
+      "id": "66eeebc5-71c1-43ad-805b-cbc21f0ff25a",
+      "name": "Edit Fields6"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c0334722-be86-49fa-bd46-f80bb47942bc",
+              "name": "precision_score",
+              "value": "={{ JSON.parse($json.content).score }}",
+              "type": "number"
+            },
+            {
+              "id": "b970bec4-562a-42c7-b1ca-c086ad407284",
+              "name": "precision_reason",
+              "value": "={{ JSON.parse($json.content).reason }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2208,
+        1184
+      ],
+      "id": "c527bc3c-3359-4afd-ad93-be5038eda40a",
+      "name": "Edit Fields7"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1adeeee0-180d-4bfa-bcdc-2312cec64730",
+              "name": "recall_score",
+              "value": "={{ JSON.parse($json.content).score }}",
+              "type": "number"
+            },
+            {
+              "id": "5d162ab8-b577-4921-bf53-c535c482cd27",
+              "name": "recall_reason",
+              "value": "={{ JSON.parse($json.content).reason }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2208,
+        1360
+      ],
+      "id": "7a77d604-7b5c-499e-84dd-1400ffa46970",
+      "name": "Edit Fields8"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "124555b2-52c1-4be8-a3b7-81b6e4fa07e9",
+              "name": "correctness_score",
+              "value": "={{ JSON.parse($json.content).score }}",
+              "type": "number"
+            },
+            {
+              "id": "2a587fee-920d-4620-979d-b49f7a32a731",
+              "name": "correctness_reason",
+              "value": "={{ JSON.parse($json.content).reason }}",
+              "type": "string"
+            },
+            {
+              "id": "681e0f22-da97-46d2-a2c9-4c40d2032c27",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2208,
+        1552
+      ],
+      "id": "9f937e1f-93fc-4a86-b8d3-6b01c193c452",
+      "name": "Edit Fields9"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 5,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2464,
+        1088
+      ],
+      "id": "86fa8b68-709a-4cf7-ba1c-6a577db9844e",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1eUZXhDP3DUGX4va1c_2zwghc3YKIWy5NKx8Kd_Ro4oo/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Φύλλο1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1EiDHh4H_HXkqAxFEO8zAzrgk_zymisfoHnilIlcBNx8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $json.timestamp }}",
+            "question": "={{ $json.question }}",
+            "ground_truth": "={{ $json.ground_truth }}",
+            "model": "={{ $json.model }}",
+            "faithfulness_score": "={{ $json.faithfulness_score }}",
+            "faithfulness_reason": "={{ $json.faithfulness_reason }}",
+            "relevance_score": "={{ $json.relevance_score }}",
+            "relevance_reason": "={{ $json.relevance_reason }}",
+            "precision_score": "={{ $json.precision_score }}",
+            "precision_reason": "={{ $json.precision_reason }}",
+            "recall_score": "={{ $json.recall_score }}",
+            "recall_reason": "={{ $json.recall_reason }}",
+            "correctness_score": "={{ $json.correctness_score }}",
+            "correctness_reason": "={{ $json.correctness_reason }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "question",
+              "displayName": "question",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ground_truth",
+              "displayName": "ground_truth",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "model",
+              "displayName": "model",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "faithfulness_score",
+              "displayName": "faithfulness_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "faithfulness_reason",
+              "displayName": "faithfulness_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "relevance_score",
+              "displayName": "relevance_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "relevance_reason",
+              "displayName": "relevance_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "precision_score",
+              "displayName": "precision_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "precision_reason",
+              "displayName": "precision_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "recall_score",
+              "displayName": "recall_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "recall_reason",
+              "displayName": "recall_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "correctness_score",
+              "displayName": "correctness_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "correctness_reason",
+              "displayName": "correctness_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ΜΕΣΟΣ ΟΡΟΣ",
+              "displayName": "ΜΕΣΟΣ ΟΡΟΣ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2656,
+        1136
+      ],
+      "id": "ec420502-a625-4d0a-9e02-f527c80fae80",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "m5hmyUmmAdZry1Uj",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Update file",
+        "height": 400,
+        "width": 3744
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -256,
+        400
+      ],
+      "id": "9b8011e5-f75e-40f8-a602-7fc358a10138",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1GtVDvN0upQnYclcVl-frQTOmtgmVZl_lyhMV0vi9V-M/edit?gid=2040481875#gid=2040481875",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1GtVDvN0upQnYclcVl-frQTOmtgmVZl_lyhMV0vi9V-M/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -240,
+        976
+      ],
+      "id": "83a134dc-5210-42dd-9f8a-a20fd57cdc75",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "m5hmyUmmAdZry1Uj",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -48,
+        976
+      ],
+      "id": "393d5d73-a3a6-4fff-96d0-496c8fae0e4e",
+      "name": "Loop Over Items2"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        2352,
+        1952
+      ],
+      "id": "b3d604d4-a855-46fe-b316-3d49f1cb589b",
+      "name": "Supabase Vector Store2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yKJWydYihpZ1049x",
+          "name": "Supabase account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "bge-m3:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        2288,
+        2112
+      ],
+      "id": "27ae2170-a87b-49d1-8936-3a3068afe87d",
+      "name": "Embeddings Ollama1",
+      "credentials": {
+        "ollamaApi": {
+          "id": "8hGKwjYnj5VcBGKA",
+          "name": "Ollama account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "file_id",
+                "value": "={{ $('Download file2').item.json.file_id }}"
+              },
+              {
+                "name": "file_name",
+                "value": "={{ $('Download file2').item.json.file_name }}"
+              },
+              {
+                "name": "Url",
+                "value": "={{ $('Search files and folders1').item.json.description }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        2432,
+        2112
+      ],
+      "id": "c521c08d-363f-4836-a503-6e42c94f11e3",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {
+        "chunkSize": 2000,
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        2336,
+        2400
+      ],
+      "id": "dbcf352e-edd7-45cc-975d-bde11941572f",
+      "name": "Recursive Character Text Splitter1"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Loop Over Items3').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "text/plain"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1408,
+        1952
+      ],
+      "id": "a4596c86-78ed-4a54-b8cd-a40ed7c7ed2a",
+      "name": "Download file2",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1FPnT84p8Li0yWEq",
+          "name": "Google Drive account 7"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "existing_files",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "file_id",
+              "fieldValue": "={{ $('Loop Over Items3').item.json.id }}"
+            },
+            {
+              "fieldId": "file_name",
+              "fieldValue": "={{ $('Loop Over Items3').item.json.name }}"
+            },
+            {
+              "fieldId": "file_version",
+              "fieldValue": "={{ $('Loop Over Items3').item.json.version }}"
+            },
+            {
+              "fieldId": "url",
+              "fieldValue": "={{ $('Search files and folders1').item.json.description }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1232,
+        1952
+      ],
+      "id": "8edf877e-b1d1-4d89-a629-de1d9e40fc35",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yKJWydYihpZ1049x",
+          "name": "Supabase account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "efe37374-3a28-4642-b612-da90e094772a",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "={{ $json.file_name }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        1936
+      ],
+      "id": "1c181aa8-c4ac-40d3-8434-e4e4f457d2b3",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "existing_files",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "file_id",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        848,
+        1936
+      ],
+      "id": "164e693e-713b-4507-8aad-a84e02173671",
+      "name": "Get a row",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "yKJWydYihpZ1049x",
+          "name": "Supabase account 4"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        0
+      ],
+      "id": "680ff238-a084-4888-996d-ecfc70153cf0",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "id": "cfa7846e-b78d-4e5f-8b2b-3afb20c84dc7",
+      "name": "Extract from File2",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        1840
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$binary.data.fileExtension}}",
+                    "rightValue": "txt",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "e96fac50-7e47-4951-a5cd-fb41df9f0678"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "TXT"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "5e1f680b-6aa9-4faf-9cbe-fa30948182f4",
+                    "leftValue": "={{$binary.data.fileExtension}}",
+                    "rightValue": "pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PDF"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1568,
+        1952
+      ],
+      "id": "4602c4cf-d192-41ae-b818-69c8686a71e7",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "ebd96dbf-52c0-445a-bab3-75d5f0d875ad",
+      "name": "Extract from File3",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        2064
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        640,
+        1920
+      ],
+      "id": "c5f242ef-2c6b-4981-bdab-10e4eb906d78",
+      "name": "Loop Over Items3"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1UKimkraCZksbO95oEv7HRt8v3_MMNkKf",
+            "mode": "list",
+            "cachedResultName": "Sources",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1UKimkraCZksbO95oEv7HRt8v3_MMNkKf"
+          }
+        },
+        "options": {
+          "fields": [
+            "name",
+            "id",
+            "version",
+            "*"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        416,
+        1920
+      ],
+      "id": "93e8e640-6ab1-4d84-b791-472e6e93a8f9",
+      "name": "Search files and folders1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1FPnT84p8Li0yWEq",
+          "name": "Google Drive account 7"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const endKeyword = \"ΔΙΕΥΘΥΝΣΗ ΓΡΑΦΕΙΑ ΠΡΑΚΤΙΚΗΣ ΑΣΚΗΣΗΣ\";\nconst text = $input.first().json.data;\nlet cleanedText = text;\ncleanedText = cleanedText.replace(/<!DOCTYPE html>[\\s\\S]*?Επιλογή Σελίδας/g, '');\nif (cleanedText.includes(endKeyword)) {\n  cleanedText = cleanedText.split(endKeyword)[0];\n}\ncleanedText = cleanedText.trim();\nreturn { cleanedText };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2032,
+        1840
+      ],
+      "id": "3efc287c-8314-4b29-afd9-d9d3aa867be3",
+      "name": "Code in JavaScript7"
+    },
+    {
+      "parameters": {
+        "jsCode": "//const text = $input.first().json.text;\nconst text = $input.first().json.text.replace(/\\n/g, ' ');\n\nreturn { text };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2032,
+        2064
+      ],
+      "id": "c3201504-54cf-493b-a41c-59e2411ea291",
+      "name": "Code in JavaScript8"
+    },
+    {
+      "parameters": {
+        "chunkSize": 2000,
+        "chunkOverlap": 200
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "typeVersion": 1,
+      "position": [
+        2496,
+        2400
+      ],
+      "id": "840e2bb7-58dc-4b90-a6d5-ff25fff9af65",
+      "name": "Token Splitter"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        464,
+        2656
+      ],
+      "id": "a98565aa-4f4b-4fee-a842-8766da23828f",
+      "name": "When chat message received",
+      "webhookId": "429e96d5-5cd2-4171-b20b-2052f32b9ea3"
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:latest",
+        "options": {
+          "format": "default"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        592,
+        2864
+      ],
+      "id": "fbb34e33-4bc9-44a4-b9c9-289e439640f3",
+      "name": "Ollama Chat Model",
+      "notesInFlow": false,
+      "credentials": {
+        "ollamaApi": {
+          "id": "8hGKwjYnj5VcBGKA",
+          "name": "Ollama account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "bge-m3:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        704,
+        3056
+      ],
+      "id": "995a07b6-61c5-4e2b-b0e4-072a7e499063",
+      "name": "Embeddings Ollama",
+      "credentials": {
+        "ollamaApi": {
+          "id": "8hGKwjYnj5VcBGKA",
+          "name": "Ollama account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Find info relevant to the chat input.",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "topK": 15,
+        "useReranker": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        752,
+        2880
+      ],
+      "id": "0507cb34-9266-43a5-8991-f02bf41052b4",
+      "name": "Supabase Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "yKJWydYihpZ1049x",
+          "name": "Supabase account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "rerank-multilingual-v3.0",
+        "topN": 4
+      },
+      "type": "@n8n/n8n-nodes-langchain.rerankerCohere",
+      "typeVersion": 1,
+      "position": [
+        896,
+        3056
+      ],
+      "id": "f0ffa994-5152-4c14-9cef-8e07a479b88e",
+      "name": "Reranker Cohere1",
+      "credentials": {
+        "cohereApi": {
+          "id": "xF4T3w5PanNT7HJb",
+          "name": "CohereApi account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "Είσαι βοηθός σε ιστοσελίδα για το πρόγραμμα πρακτικής άσκησης του Δημοκριτείου Πανεπιστημίου Θράκης (ΔΠΘ).\n\nΔιαθέτεις ένα μόνο έγκυρο εργαλείο γνώσης: το Tool \"Supabase Vector Store\".\n\nΥΠΟΧΡΕΩΤΙΚΗ ΔΙΑΔΙΚΑΣΙΑ:\n1. ΠΡΙΝ απαντήσεις σε οποιαδήποτε ερώτηση, ΠΡΕΠΕΙ να καλέσεις το Tool \"Supabase Vector Store\" με την ερώτηση του χρήστη.\n2. ΠΡΕΠΕΙ να βασίσεις την απάντησή σου ΑΠΟΚΛΕΙΣΤΙΚΑ στα αποτελέσματα που επέστρεψε το tool.\n3. ΑΠΑΓΟΡΕΥΕΤΑΙ να απαντήσεις από γενική γνώση, μνήμη, υπόθεση ή προηγούμενη γνώση.\n4. Αν δεν βρεθούν σχετικά αποτελέσματα ή δεν είσαι βέβαιος, απάντησε ακριβώς με το fallback που δίνεται παρακάτω.\n5. Αν απαντήσεις χωρίς να χρησιμοποιήσεις το tool, η απάντηση θεωρείται άκυρη.\n\nΗ απάντηση πρέπει να είναι στα Ελληνικά.\nΗ απάντηση πρέπει πάντα να τελειώνει με ενότητα:\nΠηγές:\nκαι ακριβώς από κάτω το όνομα ή τα ονόματα των εγγράφων που χρησιμοποιήθηκαν από το tool.\n\nΥΠΟΧΡΕΩΤΙΚΗ ΜΟΡΦΗ ΕΞΟΔΟΥ:\n- Θα εμφανίζεις ΑΚΡΙΒΩΣ ΜΙΑ ΦΟΡΑ το tag <ΑΠΑΝΤΗΣΗ> και θα είναι η πρώτη γραμμή της τελικής απάντησης.\n- ΜΗΝ γράψεις το string <ΑΠΑΝΤΗΣΗ> πουθενά αλλού.\n- Μετά το tag <ΑΠΑΝΤΗΣΗ> γράφεις μόνο το τελικό κείμενο της απάντησης.\n- ΜΗΝ γράφεις τίποτα μετά το τελικό κείμενο της απάντησης.\n\nΜορφή:\n<ΑΠΑΝΤΗΣΗ>\n(τελικό κείμενο απάντησης)\n\nΑν δεν βρίσκεις την απάντηση στη βάση δεδομένων ή δεν είσαι βέβαιος για αυτήν, τότε απάντησε ΑΚΡΙΒΩΣ ως εξής:\n\n<ΑΠΑΝΤΗΣΗ>\nΠαρακαλώ επικοινωνήστε με το Κεντρικό Γραφείο Πρακτικής Άσκησης μέσω e-mail στο praktiki@duth.gr",
+          "returnIntermediateSteps": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        2656
+      ],
+      "id": "b3925c39-2162-4856-b479-ad4ec1ba13e0",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "jsCode": "let raw = String($json.output ?? \"\");\n\nlet text = raw.split(\"<ΑΠΑΝΤΗΣΗ>\").pop().trim();\n\nconst contexts = [];\n\nconst steps = $json.intermediateSteps ?? [];\n\nfor (const step of steps) {\n\n  let obs = step.observation;\n  if (!obs) continue;\n\n  try {\n    const arr = JSON.parse(obs);\n\n    for (const item of arr) {\n\n      if (!item.text) continue;\n\n      const inner = JSON.parse(item.text);\n\n      if (inner.pageContent) {\n\n        contexts.push(\n          String(inner.pageContent).slice(0,1200)\n        );\n      }\n    }\n  } catch(e) {}\n}\nreturn [{\n  json:{\n    text,\n    contexts\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        2656
+      ],
+      "id": "4e6b7d2e-9a51-4315-bae0-eab6c3ad3f91",
+      "name": "Code in JavaScript9"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $(\"Loop Over Items4\").item.json ?? {};\nconst question = row.Question ?? row.question ?? \"\";\n\nlet text = String($json.text ?? \"\").trim();\n\nlet contexts = Array.isArray($json.contexts)\n  ? $json.contexts.map(String)\n  : [];\n\nconst question_key = question\n  .toLowerCase()\n  .replace(/[!\"#$%&'()*+,\\-./:;<=>?@[\\\\\\]^_`{|}~«»\"'΄’]/g, \"\")\n  .replace(/\\s+/g, \" \")\n  .trim();\n\nreturn {\n  json: {\n    question,\n    question_key,\n    text,\n    answer: text,\n    contexts\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        2752
+      ],
+      "id": "5a95a749-bf88-4d86-9764-1619488eb6cc",
+      "name": "Code in JavaScript10"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        560,
+        3104
+      ],
+      "id": "f43176e3-a94a-4b6b-a463-3bc68169202a",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "ZU1Dl9BGy23KhzDy",
+          "name": "Postgres account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "={{ $json.fileName }}",
+        "filter": {
+          "driveId": {
+            "__rl": true,
+            "value": "My Drive",
+            "mode": "list",
+            "cachedResultName": "My Drive",
+            "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+          },
+          "folderId": {
+            "__rl": true,
+            "value": "1UKimkraCZksbO95oEv7HRt8v3_MMNkKf",
+            "mode": "list",
+            "cachedResultName": "Sources",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1UKimkraCZksbO95oEv7HRt8v3_MMNkKf"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2288,
+        544
+      ],
+      "id": "09aa3ebb-fa78-4543-8695-3ff0684807f4",
+      "name": "Search files and folders",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1FPnT84p8Li0yWEq",
+          "name": "Google Drive account 7"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2688,
+        448
+      ],
+      "id": "7f6442f8-dc38-488a-910d-1f81e6fc1a3f",
+      "name": "Merge3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTML1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Create file from text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create file from text": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTML2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "HTML3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML3": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create file from text1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create file from text1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update file": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama3": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reranker Cohere": {
+      "ai_reranker": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_reranker",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript5": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Faithfulness",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Context Precision",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Context Recall",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Answer Correctness",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Answer Relevance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript6": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Faithfulness": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer Relevance": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Context Precision": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Context Recall": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer Correctness": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields9": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields6": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Edit Fields7": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Edit Fields8": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items2": {
+      "main": [
+        [],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file2": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Download file2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a row": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Extract from File2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File3": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items3": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search files and folders1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript7": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript8": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Splitter": {
+      "ai_textSplitter": [
+        []
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reranker Cohere1": {
+      "ai_reranker": [
+        [
+          {
+            "node": "Supabase Vector Store1",
+            "type": "ai_reranker",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript9": {
+      "main": [
+        []
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search files and folders": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Update file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6f48646a-96e1-486f-88e0-58ac1c1eb316",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e00e45994af68f368c9f70d96890226ba553d43b1552beb79c1c6cc895e128f"
+  },
+  "id": "XYcUpUz9TFQ0ZlHI",
+  "tags": []
+}
